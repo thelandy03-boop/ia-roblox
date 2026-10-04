@@ -1,67 +1,166 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useCallback, useRef, useEffect } from "react";
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ChatArea } from "@/components/ChatArea";
+import { InputArea } from "@/components/InputArea";
+import { Sidebar } from "@/components/Sidebar";
+import { WelcomeInputArea } from "@/components/WelcomeInputArea";
+import { SuggestionChips } from "@/components/SuggestionChips";
+import { WelcomeScreen } from "@/components/WelcomeScreen";
+
+export interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+  isStreaming?: boolean;
+}
+
+function generateId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function simulateStreamingResponse(userMessage: string): AsyncGenerator<string> {
+  async function* generator() {
+    const responses = [
+      "I'll help you build that in Roblox. Let me break this down into steps.",
+      "First, I'll create the core structure with proper architecture.",
+      "Then add the gameplay mechanics you need.",
+      "Finally, I'll optimize and add polish.",
+    ];
+
+    let fullResponse = "";
+    for (const chunk of responses) {
+      for (const word of chunk.split(" ")) {
+        fullResponse += word + " ";
+        yield fullResponse;
+        await new Promise((r) => setTimeout(r, 30 + Math.random() * 50));
+      }
+    }
+  }
+  return generator();
+}
+
+export default function ChatPage() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleSend = useCallback(async (content: string) => {
+    if (!content.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: generateId(),
+      role: "user",
+      content: content.trim(),
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setShowWelcome(false);
+    setIsLoading(true);
+
+    const assistantMessage: Message = {
+      id: generateId(),
+      role: "assistant",
+      content: "",
+      timestamp: new Date(),
+      isStreaming: true,
+    };
+
+    setMessages((prev) => [...prev, assistantMessage]);
+
+    try {
+      const stream = simulateStreamingResponse(content);
+      for await (const chunk of stream) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessage.id ? { ...msg, content: chunk } : msg
+          )
+        );
+      }
+    } finally {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMessage.id ? { ...msg, isStreaming: false } : msg
+        )
+      );
+      setIsLoading(false);
+    }
+  }, [isLoading]);
+
+  useGSAP(() => {
+    const ctx = gsap.context(() => {
+      gsap.from(".welcome-enter", {
+        opacity: 0,
+        y: 24,
+        duration: 0.6,
+        ease: "power3.out",
+        stagger: 0.1,
+      });
+    });
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+    <div className="flex h-screen bg-background overflow-hidden">
+      <Sidebar />
+
+      <main className="flex-1 flex flex-col min-w-0 ml-[var(--sidebar-width)] transition-all duration-300">
+        <header className="h-[var(--header-height)] border-b border-border bg-background/80 backdrop-blur-sm flex items-center justify-between px-6">
+          <h1 className="text-lg font-semibold text-foreground">New Chat</h1>
+          <div className="flex items-center gap-3">
+            <button className="w-9 h-9 rounded-lg hover:bg-muted transition-colors flex items-center justify-center focus-visible-ring" aria-label="New chat">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+              </svg>
+            </div>
+          </div>
+        </header>
+
+        <div className="flex-1 flex flex-col min-h-0">
+          {mounted ? (
+            <>
+              {showWelcome && messages.length === 0 ? (
+                <WelcomeScreen
+                  onSuggestionClick={handleSend}
+                  onGenerate={handleSend}
+                  className="welcome-enter flex-1 flex flex-col"
+                />
+              ) : (
+                <>
+                  <ChatArea
+                    messages={messages}
+                    isLoading={isLoading}
+                    scrollRef={scrollAreaRef}
+                  />
+                  <InputArea
+                    onSend={handleSend}
+                    disabled={isLoading}
+                    placeholder="Message Raven AI..."
+                  />
+                </>
+              )}
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col min-h-0" />
+          )}
         </div>
       </main>
     </div>

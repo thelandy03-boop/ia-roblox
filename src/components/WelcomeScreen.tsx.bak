@@ -1,0 +1,76 @@
+"use client";
+
+import { SuggestionChips } from "@/components/SuggestionChips";
+import { WelcomeInputArea } from "@/components/WelcomeInputArea";
+
+interface WelcomeScreenProps {
+  onSuggestionClick: (content: string) => void;
+  onGenerate: (prompt: string) => void;
+  className?: string;
+}
+
+export function WelcomeScreen({ onSuggestionClick, onGenerate, className }: WelcomeScreenProps) {
+  return (
+    <div className={`${className} flex flex-col items-center justify-center h-full px-6`}>
+      {/* Hero Section - Centered */}
+      <div className="flex flex-col items-center justify-center space-y-6 welcome-enter flex-1">
+        <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5" />
+            <path d="M2 12l10 5 10-5" />
+          </svg>
+        </div>
+        <div className="text-center max-w-3xl">
+          <h2 className="text-4xl font-light tracking-tight text-foreground text-balance leading-[1.1]">
+            What would you like to build?
+          </h2>
+          <p className="text-muted-foreground mt-3 text-lg max-w-2xl mx-auto">
+            Describe your Roblox game idea and Raven AI will help you script, design, and architect it from scratch.
+          </p>
+        </div>
+      </div>
+
+      {/* Suggestion Grid - Centered */}
+      <div className="flex-0 welcome-enter w-full max-w-3xl" style={{ animationDelay: "0.2s" }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+          {WELCOME_SUGGESTIONS.map((suggestion, index) => (
+            <button
+              key={suggestion}
+              onClick={() => onSuggestionClick(suggestion)}
+              className="group text-left p-5 rounded-xl bg-card border border-border hover:border-primary/50 hover:bg-card-hover transition-all duration-200 flex items-center gap-4 min-h-[96px]"
+              style={{ animationDelay: `${0.3 + index * 0.05}s` }}
+            >
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" />
+                </svg>
+              </div>
+              <span className="text-base font-medium text-foreground group-hover:text-primary transition-colors leading-relaxed">
+                {suggestion}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Horizontal Suggestion Chips - Moved up closer to grid */}
+      <div className="flex-0 welcome-enter w-full max-w-3xl -mt-12" style={{ animationDelay: "0.5s" }}>
+        <SuggestionChips onClick={onSuggestionClick} />
+      </div>
+
+      {/* Input Area - Centered */}
+      <div className="flex-0 welcome-enter w-full max-w-3xl" style={{ animationDelay: "0.6s" }}>
+        <WelcomeInputArea onGenerate={onGenerate} />
+      </div>
+    </div>
+  );
+}
+
+const WELCOME_SUGGESTIONS = [
+  "Create a Roblox obby with checkpoints",
+  "Make a weapon system with ammo and reload",
+  "Build a shop UI with DataStore saving",
+  "Script a round-based game loop",
+];
