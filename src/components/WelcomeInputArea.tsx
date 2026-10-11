@@ -22,14 +22,10 @@ interface ModelSelectorProps {
 function ModelSelector({ selectedModel, onChange, models = DEFAULT_MODELS }: ModelSelectorProps) {
   return (
     <div className="relative flex min-w-0 items-center">
-      <button
-        type="button"
-        role="combobox"
-        aria-expanded="false"
-        aria-autocomplete="none"
-        className="inline-flex h-10 w-fit min-w-0 max-w-full shrink items-center gap-2 overflow-hidden rounded-xl bg-transparent py-0 ps-3 pe-3.5 text-sm text-white/70 transition-colors hover:bg-white/[0.09] hover:text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+      <div
+        className="inline-flex h-10 w-fit min-w-0 max-w-full shrink items-center gap-2 overflow-hidden rounded-xl bg-transparent py-0 ps-3 pe-3.5 text-sm text-white/70 transition-colors hover:bg-white/[0.09] hover:text-white pointer-events-none"
       >
-        <div className="flex min-w-0 flex-1 items-center gap-1.5" style={{ pointerEvents: "none" }}>
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="size-3.5 shrink-0">
             <path d="M4.5 4h15v3.4L10.6 16.6h8.9V20h-15v-3.4l8.9-9.2H4.5V4z" />
           </svg>
@@ -49,13 +45,13 @@ function ModelSelector({ selectedModel, onChange, models = DEFAULT_MODELS }: Mod
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
-      </button>
+      </div>
 
       <select
-        aria-label="Model"
+        aria-label="Select AI Model"
         value={selectedModel}
         onChange={(e) => onChange(e.target.value)}
-        className="absolute inset-0 cursor-pointer opacity-0"
+        className="absolute inset-0 cursor-pointer opacity-0 w-full h-full focus:outline-none focus:ring-2 focus:ring-white/20 rounded-xl"
       >
         {models.map((m) => (
           <option key={m.value} value={m.value}>

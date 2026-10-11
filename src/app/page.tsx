@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useSyncExternalStore } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ChatArea } from "@/components/ChatArea";
 import { InputArea } from "@/components/InputArea";
 import { Sidebar } from "@/components/Sidebar";
-import { WelcomeInputArea } from "@/components/WelcomeInputArea";
-import { SuggestionChips } from "@/components/SuggestionChips";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 
 export interface Message {
@@ -22,13 +20,23 @@ function generateId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function simulateStreamingResponse(userMessage: string): AsyncGenerator<string> {
+const emptySubscribe = () => () => {};
+
+function useIsMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
+
+function simulateStreamingResponse(prompt: string): AsyncGenerator<string> {
   async function* generator() {
     const responses = [
-      "I'll help you build that in Roblox. Let me break this down into steps.",
-      "First, I'll create the core structure with proper architecture.",
-      "Then add the gameplay mechanics you need.",
-      "Finally, I'll optimize and add polish.",
+      `I'll help you build "${prompt}" in Roblox. Let me break this down into steps:`,
+      "First, I'll create the core structure with proper architecture and scripts.",
+      "Then add the gameplay mechanics and user interactions you need.",
+      "Finally, I'll optimize performance and add polish.",
     ];
 
     let fullResponse = "";
@@ -47,13 +55,14 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const handleNewChat = useCallback(() => {
+    if (isLoading) return;
+    setMessages([]);
+    setShowWelcome(true);
+  }, [isLoading]);
 
   const handleSend = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
@@ -119,7 +128,12 @@ export default function ChatPage() {
         <header className="h-[var(--header-height)] border-b border-border bg-background/80 backdrop-blur-sm flex items-center justify-between px-6">
           <h1 className="text-lg font-semibold text-foreground">New Chat</h1>
           <div className="flex items-center gap-3">
-            <button className="w-9 h-9 rounded-lg hover:bg-muted transition-colors flex items-center justify-center focus-visible-ring" aria-label="New chat">
+            <button
+              onClick={handleNewChat}
+              disabled={isLoading}
+              className="w-9 h-9 rounded-lg hover:bg-muted transition-colors flex items-center justify-center focus-visible-ring disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="New chat"
+            >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
