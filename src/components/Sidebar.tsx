@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { gsap } from "gsap";
@@ -82,7 +82,19 @@ const bottomItems: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("sidebar-collapsed");
+        if (saved !== null) {
+          return JSON.parse(saved) as boolean;
+        }
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
   const sidebarRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
@@ -102,22 +114,13 @@ export function Sidebar() {
     return () => ctx.revert();
   }, [isCollapsed]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("sidebar-collapsed");
-      if (saved !== null) {
-        setIsCollapsed(JSON.parse(saved));
-      }
-    }
-  }, []);
-
   const handleToggle = () => {
     const newValue = !isCollapsed;
     setIsCollapsed(newValue);
     localStorage.setItem("sidebar-collapsed", JSON.stringify(newValue));
   };
 
-  const NavLink = ({ item, isBottom = false }: { item: NavItem; isBottom?: boolean }) => {
+  const NavLink = ({ item }: { item: NavItem }) => {
     const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
     const linkRef = useRef<HTMLAnchorElement>(null);
 
@@ -215,7 +218,7 @@ export function Sidebar() {
 
         <div className="px-2 py-1 space-y-1">
           {bottomItems.map((item) => (
-            <NavLink key={item.href} item={item} isBottom />
+            <NavLink key={item.href} item={item} />
           ))}
         </div>
       </nav>
